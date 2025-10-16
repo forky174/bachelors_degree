@@ -53,7 +53,7 @@ p2 = polyfix( ARF_freq(first_part_size:end), AFR(first_part_size:end), 5,     10
 
                             % ( year, month, day, hour, min, sec)
 start_time          = datetime( 2014,     6,  20,    9,  40,   0);
-end_time            = datetime( 2014,     6,  20,   10,  40,   0);
+end_time            = datetime( 2014,     6,  20,   10,  10,   0);
 
 duration = end_time - start_time;
 files_num = ceil(seconds(duration) / 600);
@@ -246,14 +246,14 @@ end
 %% 
 % Расчет и построение на графике SPL для выбранных центральных частот:
 
-plot(t_welch, spl_third_octave(63, Pxx_welch, f_welch, constant),'DisplayName','f = 63 Hz');
+plot(t_welch/60, spl_third_octave(63, Pxx_welch, f_welch, constant),'DisplayName','f = 63 Hz');
 hold on
 ylabel('SPL [dB re 1μPa^2]')
 xlabel('Time [min]')
-plot(t_welch, spl_third_octave(125, Pxx_welch, f_welch, constant),'DisplayName','f = 125 Hz');
-plot(t_welch, spl_third_octave(1000, Pxx_welch, f_welch, constant),'DisplayName','f = 1000 Hz');
-plot(t_welch, spl_third_octave(4000, Pxx_welch, f_welch, constant),'DisplayName','f = 4000 Hz');
-plot(t_welch, spl_third_octave(10000, Pxx_welch, f_welch, constant),'DisplayName','f = 10000 Hz');
+plot(t_welch/60, spl_third_octave(125, Pxx_welch, f_welch, constant),'DisplayName','f = 125 Hz');
+plot(t_welch/60, spl_third_octave(1000, Pxx_welch, f_welch, constant),'DisplayName','f = 1000 Hz');
+plot(t_welch/60, spl_third_octave(4000, Pxx_welch, f_welch, constant),'DisplayName','f = 4000 Hz');
+plot(t_welch/60, spl_third_octave(10000, Pxx_welch, f_welch, constant),'DisplayName','f = 10000 Hz');
 legend
 hold off
 %% 
@@ -268,12 +268,14 @@ end
 %% 
 % Сравнение SPL во всем частотном диапазоне, полученный из MSP или Welch:
 
-rms_pressure = []*ceil(seconds(duration)/dt_welch); 
-for i=0:ceil(seconds(duration)/dt_welch)-1
-    rms_pressure(i+1) = rms(data_array_V(sample_rate*60*i+1:sample_rate*60*(i+1)));
+function rms_pressure = rms_pressure(data, dt_welch, duration, sample_rate)
+    rms_pressure = []*ceil(seconds(duration)/dt_welch); 
+    for i=0:ceil(seconds(duration)/dt_welch)-1
+        rms_pressure(i+1) = rms(data(sample_rate*60*i+1:sample_rate*60*(i+1)));
+    end
 end
 
-SPL_rms = 20*log10(rms_pressure)-constant;
+SPL_rms = 20*log10(rms_pressure(data_array_V, dt_welch, duration, sample_rate))-constant+10*log10(15990-0);
 SPL_welch = spl_band(0, 15990, Pxx_welch, f_welch, constant);
 
 plot(t_welch/60, SPL_welch,'DisplayName','Welch');
@@ -281,5 +283,24 @@ hold on
 ylabel('SPL [dB re 1μPa^2]')
 xlabel('Time [min]')
 plot(t_welch/60, SPL_rms,'DisplayName','RMS');
+legend
+hold off
+%%
+data_array_V_100_400 = bandpass(data_array_V, [100 400], sample_rate);
+data_array_V_10000_16000 = bandpass(data_array_V, [10000 15900], sample_rate);
+%%
+SPL_rms_100_400 = 20*log10(rms_pressure(data_array_V_100_400, dt_welch, duration, sample_rate))-constant+10*log10(400-100);
+SPL_rms_10000_16000 = 20*log10(rms_pressure(data_array_V_10000_16000, dt_welch, duration, sample_rate))-constant+10*log10(16000-10000);
+
+SPL_welch_100_400 = spl_band(100, 400, Pxx_welch, f_welch, constant);
+SPL_welch_10000_16000 = spl_band(10000, 15990, Pxx_welch, f_welch, constant);
+
+plot(t_welch/60, SPL_welch_100_400,'DisplayName','Welch 100-400');
+hold on
+ylabel('SPL [dB re 1μPa^2]')
+xlabel('Time [min]')
+plot(t_welch/60, SPL_welch_10000_16000,'DisplayName','Welch 10000-16000');
+plot(t_welch/60, SPL_rms_100_400,'DisplayName','RMS 100-400');
+plot(t_welch/60, SPL_rms_10000_16000,'DisplayName','RMS 10000-16000');
 legend
 hold off
