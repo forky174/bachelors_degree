@@ -161,7 +161,7 @@ win = hamming(window_size);
 % Поправка значений спектрограммы на АЧХ:
 
 % for k=1:size(Pxx,1)
-%     Pxx(k,:)=Pxx(k,:)*fr(k);
+%     Pxx(k,:)=Pxx(k,:)./(fr(k))^2;
 % end
 %% 
 % Построение спектрограммы:
@@ -218,7 +218,7 @@ fr = cat(1,y1,y2);
 % Поправка значений спектрограммы на АЧХ:
 
 for k=1:size(Pxx_welch,1)
-    Pxx_welch(k,:)=Pxx_welch(k,:)*fr(k);
+    Pxx_welch(k,:)=Pxx_welch(k,:)./(fr(k))^2;
 end
 %% 
 % Построение спектрограммы:
@@ -237,11 +237,12 @@ title('Spectrogram');
 % Функция, рассчитывающая SPL для заданной центральной частоты:
 
 function SPL = spl_third_octave(center_freq, pxx, f, constant)
+    df = f(2)-f(1);
     lower_limit = center_freq/1.22;
     upper_limit = center_freq*1.22;
     low = find(f>lower_limit,1);
     upp = find(f>upper_limit,1)-1;
-    SPL = 10*log10(sum(abs(pxx(low:upp,:)),1)) - constant + 10*log10(f(upp)-f(low));
+    SPL = 10*log10(sum(abs(pxx(low:upp,:)),1)) - constant + 10*log10(df);
 end
 %% 
 % Расчет и построение на графике SPL для выбранных центральных частот:
@@ -261,9 +262,10 @@ hold off
 % с spl_third_octave)_
 
 function SPL = spl_band(lower_limit, upper_limit, pxx, f, constant)
+    df = f(2)-f(1);
     low = find(f>lower_limit,1);
     upp = find(f>upper_limit,1)-1;
-    SPL = 10*log10(sum(abs(pxx(low:upp,:)),1))- constant + 10*log10(f(upp)-f(low));
+    SPL = 10*log10(sum(abs(pxx(low:upp,:)),1))- constant + 10*log10(df);
 end
 %% 
 % Сравнение SPL во всем частотном диапазоне, полученный из MSP или Welch:
