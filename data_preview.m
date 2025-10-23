@@ -277,7 +277,7 @@ function rms_pressure = rms_pressure(data, dt_welch, duration, sample_rate)
     end
 end
 
-SPL_rms = 20*log10(rms_pressure(data_array_V, dt_welch, duration, sample_rate))-constant+10*log10(15990-0);
+SPL_rms = 20*log10(rms_pressure(data_array_V, dt_welch, duration, sample_rate))-constant;
 SPL_welch = spl_band(0, 15990, Pxx_welch, f_welch, constant);
 
 plot(t_welch/60, SPL_welch,'DisplayName','Welch');
@@ -287,12 +287,20 @@ xlabel('Time [min]')
 plot(t_welch/60, SPL_rms,'DisplayName','RMS');
 legend
 hold off
-%%
+%% 
+% Фильтрация сигнала в некотором диапазоне частот для дальнейшего сравнения 
+% SPL:
+% 
+% _(Работает очень долго...)_
+
 data_array_V_100_400 = bandpass(data_array_V, [100 400], sample_rate);
 data_array_V_10000_16000 = bandpass(data_array_V, [10000 15900], sample_rate);
-%%
-SPL_rms_100_400 = 20*log10(rms_pressure(data_array_V_100_400, dt_welch, duration, sample_rate))-constant+10*log10(400-100);
-SPL_rms_10000_16000 = 20*log10(rms_pressure(data_array_V_10000_16000, dt_welch, duration, sample_rate))-constant+10*log10(16000-10000);
+%% 
+% Сравнение SPL в низкочастотной и высокочастотной полосе, полученный из MSP 
+% или Welch:
+
+SPL_rms_100_400 = 20*log10(rms_pressure(data_array_V_100_400, dt_welch, duration, sample_rate))-constant;
+SPL_rms_10000_16000 = 20*log10(rms_pressure(data_array_V_10000_16000, dt_welch, duration, sample_rate))-constant;
 
 SPL_welch_100_400 = spl_band(100, 400, Pxx_welch, f_welch, constant);
 SPL_welch_10000_16000 = spl_band(10000, 15990, Pxx_welch, f_welch, constant);
